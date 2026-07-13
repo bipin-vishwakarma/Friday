@@ -179,12 +179,14 @@ class VisionEngine:
             return self._read_webcam_frame()
         elif self._source == "file":
             return self._read_file_frame()
-        def _read_browser_frame(self) -> Optional[np.ndarray]:
+        elif self._source == "browser":
+            return self._read_browser_frame()
+        return None
+
+    def _read_browser_frame(self) -> Optional[np.ndarray]:
         """Read the latest frame received from browser WebRTC."""
         if self._browser_frame is not None:
-            # Return a copy to avoid concurrent modification issues
             return self._browser_frame.copy()
-        return None
         return None
 
     def _read_adb_frame(self) -> Optional[np.ndarray]:
@@ -240,6 +242,25 @@ class VisionEngine:
         objects = []
         emotions = []
         text = ""
+        qr_data = None
+
+        # QR code detection
+        try:
+            detector = cv2.QRCodeDetector()
+            data, points, _ = detector.detectAndDecode(frame)
+            if data:
+                qr_data = data
+                text = data  # Expose QR content as text in FrameResult
+                if self._loop is not None:
+                    try:
+                        asyncio.run_coroutine_threadsafe(
+                            fire_event(Events.QR_DETECTED, {"data": data, "frame_id": self._frame_count}),
+                            self._loop
+                        )
+                    except RuntimeError:
+                        pass
+        except Exception as e:
+            logger.debug("QR detection skipped: %s", e)
 
         # Face detection
         if self._cascade:

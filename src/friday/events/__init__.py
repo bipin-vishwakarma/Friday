@@ -99,5 +99,6 @@ class Events:
     ERROR_OCCURRED = "error_occurred"
     ADB_COMMAND_EXECUTED = "adb_command_executed"
     ADB_QR_GENERATED = "adb_qr_generated"
+    QR_DETECTED = "qr_detected"
     PIPELINE_STATE_CHANGE = "pipeline_state_change"
     FRAME_PROCESSED = "frame_processed"
