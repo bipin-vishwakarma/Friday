@@ -1,0 +1,51 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+.env
+*.egg-info/
+
+# Node.js
+node_modules/
+.next/
+.npm/
+dist/
+
+# Build
+*.buildlog.json
+.cache/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Data
+data/*.db
+data/*.sqlite
+
+# Models (large files - git-lfs recommended)
+models/*.bin
+models/*.onnx
+!models/.gitkeep
+
+# OS
+.DS_Store
+Thumbs.db
+nul
+*.log
+
+# Logs
+*.log
+logs/
+
+# Temporary
+*.tmp
+*.temp
+tmp/

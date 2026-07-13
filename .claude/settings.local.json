@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "PowerShell(python --version)",
+      "PowerShell(node --version)",
+      "PowerShell(pip list *)",
+      "PowerShell(npm list *)",
+      "Bash(npm -v)",
+      "Bash(python -c \"import uvicorn; print\\('uvicorn OK'\\)\")",
+      "Bash(npm install *)",
+      "Bash(npm run *)",
+      "Bash(npm --version)",
+      "Bash(python -c \"import uvicorn; print\\('uvicorn', uvicorn.__version__\\)\")",
+      "Bash(python -c \"import fastapi; print\\('fastapi', fastapi.__version__\\)\")",
+      "Bash(python -c \"from src.friday.api.main import app; print\\('IMPORT OK, app title:', app.title\\)\")"
+    ]
+  }
+}
