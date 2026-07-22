@@ -33,6 +33,12 @@ Friday listens, sees, and responds — a hands-free desktop assistant that wakes
 | Vision | MediaPipe (presence + face recognition) |
 | Front end | Web UI (`frontend/`) |
 
+## 🗺️ Architecture
+
+<p align="center">
+<img src="assets/architecture.svg" width="100%" alt="Friday architecture — voice pipeline (Mic → Wake Word → Whisper → Agent Core → Piper → Speaker), vision (Camera → MediaPipe presence + face ID), and a FastAPI + Web UI serving layer" />
+</p>
+
 ## 🚀 Run it
 
 ```bash
