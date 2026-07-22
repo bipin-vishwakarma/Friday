@@ -55,11 +55,11 @@ Then open the local web UI that Friday prints on startup. See **[DEPLOYMENT_GUID
 ## 📂 Structure
 
 ```
-src/            core assistant + agents + voice pipeline
-frontend/       web UI
+src/friday/     core: agents · voice · vision · llm · memory · config
+frontend/       Next.js web UI
 models/         wake-word · Whisper · Piper voice models
 launch.py       one-command startup
-tests/          test suite
+test_*.py       test suite (root-level)
 ```
 
 ## 🔐 Notes
