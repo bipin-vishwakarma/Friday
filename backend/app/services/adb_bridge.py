@@ -1,7 +1,7 @@
 """
 Samsung J2 ADB Bridge Service
 Automates ADB reverse port forwarding, screen wake-lock,
-and HUD browser launching on the connected Samsung Galaxy J2 Core.
+and native Friday HUD kiosk launching on the connected Samsung Galaxy J2 Core.
 """
 
 import logging
@@ -32,7 +32,7 @@ class ADBBridgeService:
 
     def setup_j2_hud(self) -> Dict[str, Any]:
         """
-        Reverse-forward ports and launch HUD on the Samsung J2.
+        Reverse-forward ports and launch native Friday HUD on the Samsung J2.
         """
         devices = self.get_connected_devices()
         if not devices:
@@ -56,19 +56,16 @@ class ADBBridgeService:
             subprocess.run(["adb", "-s", target_dev, "shell", "input", "keyevent", "224"], check=True)
             subprocess.run(["adb", "-s", target_dev, "shell", "input", "keyevent", "82"], check=True)
 
-            # 4. Open HUD in browser on the J2 device
-            hud_url = f"http://localhost:{settings.HUD_PORT}"
+            # 4. Launch Native Friday HUD Android Application (Zero Browser!)
             subprocess.run([
                 "adb", "-s", target_dev, "shell", "am", "start",
-                "-a", "android.intent.action.VIEW",
-                "-d", hud_url
+                "-n", "com.friday.hud/.MainActivity"
             ], check=True)
 
             return {
                 "status": "success",
                 "device": target_dev,
-                "hud_url": hud_url,
-                "message": f"HUD successfully launched on device {target_dev}"
+                "message": f"Native Friday HUD successfully launched on device {target_dev}"
             }
         except subprocess.CalledProcessError as e:
             logger.error(f"ADB command failed: {e}")
