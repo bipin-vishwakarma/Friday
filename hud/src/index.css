@@ -1,0 +1,39 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: 'Rajdhani', sans-serif;
+  color-scheme: dark;
+}
+
+.font-cyber {
+  font-family: 'Orbitron', monospace;
+}
+
+/* Custom glow filters */
+.glow-cyan {
+  filter: drop-shadow(0 0 12px rgba(0, 240, 255, 0.6));
+}
+
+.glow-purple {
+  filter: drop-shadow(0 0 12px rgba(138, 43, 226, 0.6));
+}
+
+.glow-amber {
+  filter: drop-shadow(0 0 12px rgba(255, 183, 3, 0.6));
+}
+
+.glow-neon {
+  filter: drop-shadow(0 0 12px rgba(57, 255, 20, 0.6));
+}
+
+/* Hide scrollbars for clean HUD look */
+::-webkit-scrollbar {
+  display: none;
+}
+* {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  -webkit-tap-highlight-color: transparent;
+}

@@ -5,52 +5,48 @@ __pycache__/
 *.so
 .Python
 env/
-venv/
-.venv/
-.env
-*.egg-info/
-
-# Node.js
-node_modules/
-.next/
-.npm/
+build/
+develop-eggs/
 dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.venv/
+venv/
+ENV/
 
-# Build
-*.buildlog.json
-.cache/
+# Environment Variables
+.env
+.env.*
+!.env.example
 
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
+# Node / HUD
+node_modules/
+hud/dist/
+hud/.vite/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
 
-# Data
-data/*.db
-data/*.sqlite
+# Logs & Runtime
+*.log
+backend.pid
+hud.pid
+*.mp3
+*.wav
 
-# Models (large files - git-lfs recommended)
-models/*.bin
-models/*.onnx
-!models/.gitkeep
-
-# OS
+# OS / Editor
 .DS_Store
 Thumbs.db
-nul
-*.log
-
-# Logs
-*.log
-logs/
-
-# Temporary
-*.tmp
-*.temp
-tmp/
-# runtime data (privacy)
-*.db
-src/friday.db
-snapshots/
-known_faces/
+.vscode/
+.idea/
