@@ -22,6 +22,7 @@ from .agents.research import ResearchAgent
 from .agents.monitor import MonitorAgent
 from .services.voice import VoiceService
 from .services.adb_bridge import ADBBridgeService
+from .services.media_tracker import MediaTrackerService
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 logger = logging.getLogger("friday.main")
@@ -34,6 +35,7 @@ research = ResearchAgent()
 monitor = MonitorAgent()
 voice = VoiceService()
 adb_bridge = ADBBridgeService()
+media_tracker = MediaTrackerService()
 
 class ConnectionManager:
     """Manages active WebSocket connections from desktop & Samsung J2 HUD."""
@@ -59,13 +61,15 @@ class ConnectionManager:
 
 ws_manager = ConnectionManager()
 
-# Background telemetry broadcaster
+# Background telemetry & media broadcaster
 async def telemetry_loop():
     while True:
         try:
             if ws_manager.active_connections:
                 telemetry = monitor.get_telemetry()
+                media = await media_tracker.get_current_media()
                 await ws_manager.broadcast(telemetry)
+                await ws_manager.broadcast({"type": "media", "data": media})
         except Exception as e:
             logger.debug(f"Telemetry loop error: {e}")
         await asyncio.sleep(1.0)
@@ -119,6 +123,10 @@ async def health_check():
 @app.get("/api/telemetry")
 async def get_telemetry():
     return monitor.get_telemetry()
+
+@app.get("/api/media")
+async def get_media():
+    return await media_tracker.get_current_media()
 
 @app.post("/api/j2/launch")
 async def launch_j2():

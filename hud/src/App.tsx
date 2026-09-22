@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { FluidOrb, AgentState } from './components/FluidOrb';
 import { TelemetryGauges, TelemetryData } from './components/TelemetryGauges';
+import { SpotifyPlayer, MediaData } from './components/SpotifyPlayer';
 import { QuickActions } from './components/QuickActions';
 import { ChatFeed } from './components/ChatFeed';
-import { Radio, ShieldCheck, RefreshCw } from 'lucide-react';
+import { StandaloneClock } from './components/StandaloneClock';
+import { Zap, RefreshCw, Layers } from 'lucide-react';
 
 interface ChatMessage {
   sender: 'user' | 'assistant';
@@ -14,12 +16,27 @@ interface ChatMessage {
 export const App: React.FC = () => {
   const [agentState, setAgentState] = useState<AgentState>('idle');
   const [telemetry, setTelemetry] = useState<TelemetryData | null>(null);
+  const [media, setMedia] = useState<MediaData | null>(null);
   const [isConnected, setIsConnected] = useState<boolean>(false);
   const [lastMessage, setLastMessage] = useState<ChatMessage | null>(null);
   const [isListening, setIsListening] = useState<boolean>(false);
+  const [isLandscape, setIsLandscape] = useState<boolean>(window.innerWidth > window.innerHeight);
 
   const wsRef = useRef<WebSocket | null>(null);
   const recognitionRef = useRef<any>(null);
+
+  // Monitor orientation changes
+  useEffect(() => {
+    const handleResize = () => {
+      setIsLandscape(window.innerWidth > window.innerHeight);
+    };
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', handleResize);
+    };
+  }, []);
 
   // Setup WebSocket connection to backend
   useEffect(() => {
@@ -28,41 +45,48 @@ export const App: React.FC = () => {
     const connectWs = () => {
       const host = window.location.hostname || 'localhost';
       const wsUrl = `ws://${host}:8000/ws`;
-      const ws = new WebSocket(wsUrl);
 
-      ws.onopen = () => {
-        setIsConnected(true);
-        console.log('[WS] Connected to Friday backend');
-      };
+      try {
+        const ws = new WebSocket(wsUrl);
 
-      ws.onmessage = (event) => {
-        try {
-          const msg = JSON.parse(event.data);
-          if (msg.type === 'telemetry') {
-            setTelemetry(msg);
-          } else if (msg.type === 'agent_state') {
-            setAgentState(msg.state);
-          } else if (msg.type === 'user_message') {
-            setLastMessage({ sender: 'user', text: msg.text });
-          } else if (msg.type === 'assistant_message') {
-            setLastMessage({ sender: 'assistant', text: msg.text, intent: msg.intent });
+        ws.onopen = () => {
+          setIsConnected(true);
+          console.log('[WS] Handshake established! Supercharged PC mode active.');
+        };
+
+        ws.onmessage = (event) => {
+          try {
+            const msg = JSON.parse(event.data);
+            if (msg.type === 'telemetry') {
+              setTelemetry(msg);
+            } else if (msg.type === 'media') {
+              setMedia(msg.data);
+            } else if (msg.type === 'agent_state') {
+              setAgentState(msg.state);
+            } else if (msg.type === 'user_message') {
+              setLastMessage({ sender: 'user', text: msg.text });
+            } else if (msg.type === 'assistant_message') {
+              setLastMessage({ sender: 'assistant', text: msg.text, intent: msg.intent });
+            }
+          } catch (e) {
+            console.error('[WS] Parse error', e);
           }
-        } catch (e) {
-          console.error('[WS] Parse error', e);
-        }
-      };
+        };
 
-      ws.onclose = () => {
-        setIsConnected(false);
-        setAgentState('idle');
+        ws.onclose = () => {
+          setIsConnected(false);
+          setAgentState('idle');
+          reconnectTimeout = setTimeout(connectWs, 2000);
+        };
+
+        ws.onerror = () => {
+          ws.close();
+        };
+
+        wsRef.current = ws;
+      } catch (err) {
         reconnectTimeout = setTimeout(connectWs, 2000);
-      };
-
-      ws.onerror = () => {
-        ws.close();
-      };
-
-      wsRef.current = ws;
+      }
     };
 
     connectWs();
@@ -73,7 +97,7 @@ export const App: React.FC = () => {
     };
   }, []);
 
-  // Setup Web Speech API for voice recognition on J2 / Browser
+  // Web Speech API for voice recognition on Android
   useEffect(() => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (SpeechRecognition) {
@@ -109,7 +133,7 @@ export const App: React.FC = () => {
 
   const handleToggleMic = () => {
     if (!recognitionRef.current) {
-      alert('Speech recognition is not supported in this browser. Please type your command.');
+      alert('Voice typing is not active in this mode. Type your command below.');
       return;
     }
 
@@ -135,13 +159,15 @@ export const App: React.FC = () => {
         speak: true
       }));
     } else {
-      // Fallback via HTTP REST
-      const host = window.location.hostname || 'localhost';
-      fetch(`http://${host}:8000/api/process`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text, speak: true })
-      }).catch(err => console.error(err));
+      // Local Standalone mode fallback
+      setLastMessage({ sender: 'user', text });
+      setTimeout(() => {
+        setLastMessage({
+          sender: 'assistant',
+          text: `[Offline Standalone] "${text}" noted. Connect PC for full Laya & Groq AI automation.`,
+          intent: 'standalone_edge'
+        });
+      }, 250);
     }
   };
 
@@ -152,20 +178,13 @@ export const App: React.FC = () => {
         action: action,
         params: params
       }));
-    } else {
-      const host = window.location.hostname || 'localhost';
-      fetch(`http://${host}:8000/api/pc/action`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action, params })
-      }).catch(err => console.error(err));
     }
   };
 
   return (
-    <div className="flex flex-col items-center justify-between min-h-screen h-screen w-full bg-[#080b11] text-slate-100 p-2 select-none overflow-hidden">
-      {/* Top Header / Status Bar */}
-      <header className="w-full max-w-sm flex items-center justify-between px-3 py-1 border-b border-slate-800/80">
+    <div className="flex flex-col h-screen w-screen bg-[#080b11] text-slate-100 p-2 select-none overflow-hidden justify-between">
+      {/* Top Status Header */}
+      <header className="w-full flex items-center justify-between px-3 py-1 border-b border-slate-800/80 shrink-0">
         <div className="flex items-center gap-1.5">
           <span className="font-cyber font-bold text-sm tracking-wider text-cyan-400">
             FRIDAY
@@ -174,47 +193,68 @@ export const App: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1 text-[11px] font-cyber">
-            <Radio size={12} className={isConnected ? "text-emerald-400 animate-pulse" : "text-rose-500"} />
-            <span className={isConnected ? "text-emerald-400" : "text-rose-400"}>
-              {isConnected ? "LINKED" : "OFFLINE"}
-            </span>
+          <div className="flex items-center gap-1 text-[10px] font-cyber">
+            {isConnected ? (
+              <>
+                <Zap size={11} className="text-emerald-400 animate-pulse" />
+                <span className="text-emerald-400 font-bold tracking-wider">SUPERCHARGED // PC LINKED</span>
+              </>
+            ) : (
+              <>
+                <Layers size={11} className="text-cyan-400" />
+                <span className="text-cyan-400 font-medium tracking-wider">STANDALONE EDGE</span>
+              </>
+            )}
           </div>
 
           <button 
             onClick={() => window.location.reload()}
             className="text-slate-500 hover:text-slate-300 active:rotate-180 transition-transform p-1"
           >
-            <RefreshCw size={12} />
+            <RefreshCw size={11} />
           </button>
         </div>
       </header>
 
-      {/* Main Dynamic View Area */}
-      <main className="flex-1 w-full max-w-sm flex flex-col items-center justify-evenly py-1 gap-2 overflow-y-auto">
-        {/* Animated Fluid Orb */}
-        <FluidOrb 
-          state={agentState} 
-          onClick={handleToggleMic} 
-          size={160} 
-        />
+      {/* Main Dynamic Workspace - Responsive for Landscape and Portrait */}
+      <div className={`flex-1 flex ${isLandscape ? 'flex-row items-center justify-between gap-3 overflow-hidden py-1' : 'flex-col items-center justify-evenly py-1 gap-2 overflow-y-auto'}`}>
+        {/* Left Section in Landscape, Top in Portrait */}
+        <div className={`flex flex-col items-center justify-center ${isLandscape ? 'w-1/2 h-full justify-evenly' : 'w-full gap-2'}`}>
+          <FluidOrb 
+            state={agentState} 
+            onClick={handleToggleMic} 
+            size={isLandscape ? 130 : 160} 
+          />
 
-        {/* Real-time PC Telemetry Dials */}
-        <TelemetryGauges data={telemetry} />
+          <ChatFeed 
+            lastMessage={lastMessage} 
+            onSend={handleSendQuery} 
+            isListening={isListening} 
+            onToggleMic={handleToggleMic} 
+          />
+        </div>
 
-        {/* Quick Action Touch Tiles */}
-        <QuickActions onAction={handleExecuteAction} />
-      </main>
+        {/* Right Section in Landscape, Bottom in Portrait */}
+        <div className={`flex flex-col items-center justify-center ${isLandscape ? 'w-1/2 h-full justify-evenly gap-2 overflow-y-auto' : 'w-full gap-2'}`}>
+          {isConnected ? (
+            <>
+              {/* Live Spotify & Windows Media Session */}
+              <SpotifyPlayer media={media} onAction={handleExecuteAction} />
 
-      {/* Bottom Chat and Voice Bar */}
-      <footer className="w-full max-w-sm pb-1 pt-0.5">
-        <ChatFeed 
-          lastMessage={lastMessage} 
-          onSend={handleSendQuery} 
-          isListening={isListening} 
-          onToggleMic={handleToggleMic} 
-        />
-      </footer>
+              {/* Real-time PC Hardware Telemetry */}
+              <TelemetryGauges data={telemetry} />
+
+              {/* Quick Touch Controls */}
+              <QuickActions onAction={handleExecuteAction} />
+            </>
+          ) : (
+            <>
+              {/* Standalone Desk Clock & Local Ambient Status */}
+              <StandaloneClock />
+            </>
+          )}
+        </div>
+      </div>
     </div>
   );
 };
